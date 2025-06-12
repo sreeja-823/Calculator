@@ -28,6 +28,6 @@ button {
 
 .clear {
   grid-column: span 4;
-  background-color: blue;
-  color: white;
+  background-color: lightgray;
+  color: black;
 }
