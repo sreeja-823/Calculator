@@ -3,7 +3,7 @@ name: Build and Deploy to AKS
 on:
   push:
     branches:
-      - main  # Change if your default branch is different
+      - master  # Change if your default branch is different
 
 jobs:
   build-and-deploy:
@@ -41,5 +41,5 @@ jobs:
 
     - name: Deploy to AKS
       run: |
-        kubectl apply -f k8/deployment.yaml
-        kubectl apply -f k8/service.yaml
+        kubectl apply -f k8s/deployment.yaml
+        kubectl apply -f k8s/service.yaml
