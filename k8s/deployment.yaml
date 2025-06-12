@@ -15,5 +15,6 @@ spec:
       containers:
       - name: calculator
         image: mycalculator.azurecr.io/calculator:latest   # Your ACR image here
+        imagePullPolicy: Always 
         ports:
         - containerPort: 3000
