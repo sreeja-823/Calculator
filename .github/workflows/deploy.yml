@@ -1,9 +1,14 @@
-name: Build and Deploy to AKS
+name: Deploy React App to AKS
 
 on:
   push:
     branches:
-      - master  # Change if your default branch is different
+      - master
+
+env:
+  ACR_NAME: mycalculator
+  ACR_LOGIN_SERVER: mycalculator.azurecr.io
+  IMAGE_NAME: calculator
 
 jobs:
   build-and-deploy:
@@ -13,33 +18,28 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Log in to Azure CLI
+    - name: Log in to Azure
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Login to ACR
-      uses: azure/docker-login@v1
+    - name: Log in to ACR
+      run: |
+        az acr login --name $ACR_NAME
+
+    - name: Build and push Docker image with unique tag
+      run: |
+        IMAGE_TAG=${{ github.sha }}
+        docker build -t $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG .
+        docker push $ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+    - name: Set AKS context
+      uses: azure/aks-set-context@v3
       with:
-        login-server: mycalculator.azurecr.io
-        username: ${{ secrets.ACR_USERNAME }}
-        password: ${{ secrets.ACR_PASSWORD }}
+        resource-group: mycalculator
+        cluster-name: myakscluster
 
-    - name: Build and push Docker image
+    - name: Update Kubernetes deployment with new image
       run: |
-        docker build -t mycalculator.azurecr.io/calculator:latest .
-        docker push mycalculator.azurecr.io/calculator:latest
-
-    - name: Set up kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-        version: 'latest'
-
-    - name: Get AKS credentials
-      run: |
-        az aks get-credentials --resource-group mycalculator --name myakscluster --overwrite-existing
-
-    - name: Deploy to AKS
-      run: |
-        kubectl apply -f k8s/deployment.yaml
-        kubectl apply -f k8s/service.yaml
+        kubectl set image deployment/calculator-deployment calculator=$ACR_LOGIN_SERVER/$IMAGE_NAME:$IMAGE_TAG
