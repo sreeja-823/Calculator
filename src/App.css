@@ -30,4 +30,5 @@ button {
   grid-column: span 4;
   background-color: lightgray;
   color: black;
+  border:none;
 }
